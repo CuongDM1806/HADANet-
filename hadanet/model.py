@@ -227,11 +227,17 @@ class HADANet(nn.Module):
     def forward_domains(
         self, source: Tensor, target: Tensor, alpha: float
     ) -> dict[str, Tensor]:
-        source_features = self.extract_features(source)
-        target_features = self.extract_features(target)
+        # Process both domains in one pass so every BatchNorm layer uses one
+        # shared source-target statistic.  Separate forwards normalize each
+        # domain independently during training and update running statistics
+        # twice (with the target update occurring last), which makes training
+        # and evaluation inconsistent.
+        source_count = source.size(0)
+        all_features = self.extract_features(torch.cat((source, target), dim=0))
+        source_features = all_features[:source_count]
+        target_features = all_features[source_count:]
         source_logits = self.classifier(source_features)
-        domain_features = torch.cat((source_features, target_features), dim=0)
-        domain_logits = self.domain_discriminator(self.grl(domain_features, alpha))
+        domain_logits = self.domain_discriminator(self.grl(all_features, alpha))
         return {
             "source_features": source_features,
             "target_features": target_features,
@@ -245,7 +251,12 @@ class HADANet(nn.Module):
         weight = self.classifier.fc2.weight
         gram = weight @ weight.transpose(0, 1)
         identity = torch.eye(gram.size(0), device=gram.device, dtype=gram.dtype)
-        return (gram - identity).square().sum() / float(self.feature_dim**2)
+        # d in Eq. (13) is the input feature dimension of this FC layer, not
+        # the 1280-dimensional input of the complete classifier.
+        classifier_feature_dim = weight.size(1)
+        return (gram - identity).square().sum() / float(
+            classifier_feature_dim**2
+        )
 
     @staticmethod
     def grl_alpha(epoch: int, epochs: int) -> float:

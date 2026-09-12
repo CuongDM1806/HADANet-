@@ -23,6 +23,28 @@ class HADANetArchitectureTest(unittest.TestCase):
         self.assertIsNotNone(model.classifier.fc2.weight.grad)
         self.assertIsNotNone(model.domain_discriminator.network[0].weight.grad)
 
+    def test_source_and_target_share_one_batchnorm_pass(self):
+        torch.manual_seed(4)
+        model = HADANet().train()
+        source = torch.randn(4, 64, 5, 4)
+        target = torch.randn(4, 64, 5, 4) + 2.0
+
+        first_batch_norm = model.hierarchical_cnn.horizontal[1]
+        self.assertEqual(first_batch_norm.num_batches_tracked.item(), 0)
+        outputs = model.forward_domains(source, target, alpha=0.5)
+
+        self.assertEqual(first_batch_norm.num_batches_tracked.item(), 1)
+        self.assertEqual(outputs["source_features"].shape, (4, 1280))
+        self.assertEqual(outputs["target_features"].shape, (4, 1280))
+
+    def test_orthogonal_loss_uses_final_fc_input_dimension(self):
+        model = HADANet()
+        weight = model.classifier.fc2.weight
+        gram = weight @ weight.transpose(0, 1)
+        identity = torch.eye(gram.size(0))
+        expected = (gram - identity).square().sum() / weight.size(1) ** 2
+        torch.testing.assert_close(model.orthogonal_loss(), expected)
+
     def test_de_feature_shape(self):
         rng = np.random.default_rng(2)
         trials = rng.standard_normal((2, 64, 480)).astype(np.float32)
