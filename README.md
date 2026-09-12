@@ -2,13 +2,13 @@
 
 This branch evaluates a raw-EEG variant of HADANet. It keeps the strict
 unlabeled-target LOSO protocol and HADANet domain-adaptation objectives, but
-replaces the paper's hand-crafted DE input with three-second EEG trials.
+replaces the paper's hand-crafted DE input with 4.1-second EEG trials.
 
 ## What is implemented
 
 The active model in `hadanet/model_raw.py` uses:
 
-1. raw three-second EEG, shaped `[B, 64, 480]`;
+1. raw 4.1-second EEG, shaped `[B, 64, 656]`;
 2. short- and long-range learned temporal convolutions;
 3. element-wise temporal fusion;
 4. channel and local/dilated temporal attention;
@@ -39,10 +39,10 @@ without labels during training, so this is transductive UDA rather than pure
 domain generalization.
 
 The PhysioNet loader uses imagery runs 4, 6, 8, 10, 12, and 14. It excludes
-rest and executed-movement runs and crops the canonical `[0, 3)` interval from
+rest and executed-movement runs and crops the full `[0, 4.1)` interval from
 cue onset. No notch filter, frequency-band filter bank, temporal segmentation,
 or differential entropy is applied. No z-score normalization is applied. The
-cached and model input is raw EEG with shape `[trial, 64, 480]`.
+cached and model input is raw EEG with shape `[trial, 64, 656]`.
 
 ## Installation and training
 
@@ -54,6 +54,7 @@ python train_physionet_loso.py \
   --epochs 150 \
   --batch-size 40 \
   --validation-fraction 0.05 \
+  --patience 0 \
   --device cuda
 ```
 
@@ -63,7 +64,7 @@ For a quick end-to-end check, run one target fold:
 python train_physionet_loso.py --subjects 1-20 --targets 1 --epochs 2
 ```
 
-Raw EDF files and versioned three-second trials are cached under `data/`. Results are
+Raw EDF files and versioned 4.1-second trials are cached under `data/`. Results are
 written to `results/physionet_loso/seed_42/`, including:
 
 - one source-validation-selected checkpoint per target;

@@ -9,6 +9,9 @@ from train_physionet_loso import make_loaders
 
 
 class HADANetArchitectureTest(unittest.TestCase):
+    def test_physionet_trial_length_is_4p1_seconds(self):
+        self.assertEqual(TRIAL_SAMPLES, 656)
+
     def test_raw_model_is_the_active_architecture(self):
         self.assertIs(HADANet, HADANetRaw)
         self.assertGreater(
@@ -61,7 +64,7 @@ class HADANetArchitectureTest(unittest.TestCase):
         expected = (gram - identity).square().sum() / weight.size(1) ** 2
         torch.testing.assert_close(model.orthogonal_loss(), expected)
 
-    def test_raw_front_end_requires_three_second_trials(self):
+    def test_raw_front_end_requires_4p1_second_trials(self):
         model = HADANet()
         trials = torch.randn(2, 64, TRIAL_SAMPLES)
         self.assertEqual(model(trials).shape, (2, 4))

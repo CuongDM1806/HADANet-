@@ -67,7 +67,12 @@ def arguments() -> argparse.Namespace:
         default=0.05,
         help="Per-source validation fraction (default: 0.05, i.e. 95/5).",
     )
-    parser.add_argument("--patience", type=int, default=20)
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=0,
+        help="Early-stopping patience; 0 disables early stopping (default: 0).",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--device", default="auto", help="auto, cpu, cuda, or cuda:N")

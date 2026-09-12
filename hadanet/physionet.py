@@ -11,10 +11,10 @@ import numpy as np
 
 IMAGERY_RUNS = (4, 6, 8, 10, 12, 14)
 CLASS_NAMES = ("left_hand", "right_hand", "both_hands", "both_feet")
-TRIAL_SECONDS = 3.0
+TRIAL_SECONDS = 4.1
 SFREQ = 160.0
-TRIAL_SAMPLES = int(TRIAL_SECONDS * SFREQ)
-CACHE_VERSION = 3
+TRIAL_SAMPLES = int(round(TRIAL_SECONDS * SFREQ))
+CACHE_VERSION = 4
 
 
 def _load_imagery_trials(
@@ -22,7 +22,7 @@ def _load_imagery_trials(
     data_path: Path,
     verbose: str,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Download and crop six imagery runs to raw three-second EEG trials."""
+    """Download and crop six imagery runs to raw 4.1-second EEG trials."""
     import mne
     from mne.datasets import eegbci
 
@@ -84,12 +84,12 @@ def load_subject_trials(
     cache_path: str | Path,
     verbose: str = "WARNING",
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Load raw [trial, 64, 480] EEG using a versioned on-disk cache."""
+    """Load raw [trial, 64, 656] EEG using a versioned on-disk cache."""
     data_path = Path(data_path)
     cache_path = Path(cache_path)
     cache_path.mkdir(parents=True, exist_ok=True)
     cache_file = (
-        cache_path / f"physionet_s{subject_id:03d}_raw3s_v{CACHE_VERSION}.npz"
+        cache_path / f"physionet_s{subject_id:03d}_raw4p1s_v{CACHE_VERSION}.npz"
     )
     if cache_file.is_file():
         cached = np.load(cache_file)

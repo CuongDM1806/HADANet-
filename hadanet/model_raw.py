@@ -1,6 +1,6 @@
-"""Raw-EEG HADANet variant for three-second PhysioNet trials.
+"""Raw-EEG HADANet variant for 4.1-second PhysioNet trials.
 
-This front-end accepts tensors shaped ``[batch, 64, 480]``.  It deliberately
+This front-end accepts tensors shaped ``[batch, 64, 656]``.  It deliberately
 does not require differential entropy, a filter bank, or hand-crafted temporal
 segments.  The downstream attention, residual feature correction, domain
 alignment, and classifier follow the existing HADANet implementation.
@@ -124,7 +124,7 @@ class HADANetRaw(nn.Module):
     def __init__(
         self,
         channels: int = 64,
-        samples: int = 480,
+        samples: int = 656,
         classes: int = 4,
         widen: int = 128,
         pooled_samples: int = 20,
