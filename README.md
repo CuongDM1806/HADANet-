@@ -41,8 +41,8 @@ domain generalization.
 The PhysioNet loader uses imagery runs 4, 6, 8, 10, 12, and 14. It excludes
 rest and executed-movement runs and crops the canonical `[0, 3)` interval from
 cue onset. No notch filter, frequency-band filter bank, temporal segmentation,
-or differential entropy is applied. The cached input is raw EEG with shape
-`[trial, 64, 480]`.
+or differential entropy is applied. No z-score normalization is applied. The
+cached and model input is raw EEG with shape `[trial, 64, 480]`.
 
 ## Installation and training
 

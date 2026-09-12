@@ -192,23 +192,14 @@ def build_loso_fold(
     source_val_y = np.concatenate(val_y_parts).astype(np.int64, copy=False)
     target_x, target_y = subject_pool[target_subject]
 
-    # Fit normalization only on labeled source training trials.  Target EEG is
-    # transformed but never used to estimate supervised preprocessing state.
-    mean = source_train_x.mean(axis=0, keepdims=True)
-    std = source_train_x.std(axis=0, keepdims=True).clip(min=1e-6)
-
-    def standardize(array: np.ndarray) -> np.ndarray:
-        return ((array - mean) / std).astype(np.float32, copy=False)
-
-    target_x = standardize(target_x)
     return LOSOFold(
         target_subject=target_subject,
         source_subjects=source_subjects,
-        source_train_x=standardize(source_train_x),
+        source_train_x=source_train_x,
         source_train_y=source_train_y,
-        source_val_x=standardize(source_val_x),
+        source_val_x=source_val_x,
         source_val_y=source_val_y,
-        target_train_x=target_x,
+        target_train_x=target_x.astype(np.float32, copy=False),
         target_test_x=target_x.copy(),
         target_test_y=target_y.astype(np.int64, copy=True),
     )

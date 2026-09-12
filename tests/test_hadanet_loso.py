@@ -87,6 +87,8 @@ class LOSOSplitTest(unittest.TestCase):
         self.assertEqual(len(fold.source_val_y), 8)
         self.assertEqual(len(fold.target_train_x), 32)
         self.assertEqual(len(fold.target_test_y), 32)
+        np.testing.assert_array_equal(fold.target_train_x, pool[2][0])
+        np.testing.assert_array_equal(fold.target_test_x, pool[2][0])
         source_loader, val_loader, target_loader, test_loader = make_loaders(
             fold, batch_size=4, num_workers=0
         )
