@@ -55,7 +55,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--cache-dir", type=Path, default=Path("data/physionet_de"))
     parser.add_argument("--results-dir", type=Path, default=Path("results/physionet_loso"))
     parser.add_argument("--epochs", type=int, default=150)
-    parser.add_argument("--batch-size", type=int, default=15)
+    parser.add_argument("--batch-size", type=int, default=40)
     parser.add_argument("--learning-rate", type=float, default=5e-4)
     parser.add_argument(
         "--validation-fraction",

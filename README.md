@@ -56,7 +56,7 @@ python train_physionet_loso.py \
   --subjects 1-20 \
   --targets 1-20 \
   --epochs 150 \
-  --batch-size 15 \
+  --batch-size 40 \
   --validation-fraction 0.05 \
   --device cuda
 ```
