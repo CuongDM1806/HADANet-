@@ -3,14 +3,14 @@ import unittest
 import numpy as np
 import torch
 
-from hadanet import HADANet, HADANetLoss, HADANetV1, HADANetV2
-from hadanet.physionet import build_loso_fold, differential_entropy_features
+from hadanet import HADANet, HADANetLoss, HADANetRaw, HADANetV1, HADANetV2
+from hadanet.physionet import TRIAL_SAMPLES, build_loso_fold
 from train_physionet_loso import make_loaders
 
 
 class HADANetArchitectureTest(unittest.TestCase):
-    def test_v2_is_the_active_architecture(self):
-        self.assertIs(HADANet, HADANetV2)
+    def test_raw_model_is_the_active_architecture(self):
+        self.assertIs(HADANet, HADANetRaw)
         self.assertGreater(
             sum(parameter.numel() for parameter in HADANetV2().parameters()),
             sum(parameter.numel() for parameter in HADANetV1().parameters()),
@@ -28,8 +28,8 @@ class HADANetArchitectureTest(unittest.TestCase):
     def test_complete_loss_is_finite_and_backpropagates(self):
         torch.manual_seed(1)
         model = HADANet()
-        source = torch.randn(4, 64, 5, 4)
-        target = torch.randn(4, 64, 5, 4)
+        source = torch.randn(4, 64, TRIAL_SAMPLES)
+        target = torch.randn(4, 64, TRIAL_SAMPLES)
         labels = torch.tensor([0, 1, 2, 3])
         outputs = model.forward_domains(source, target, alpha=0.5)
         losses = HADANetLoss()(model, outputs, labels)
@@ -42,10 +42,10 @@ class HADANetArchitectureTest(unittest.TestCase):
     def test_source_and_target_share_one_batchnorm_pass(self):
         torch.manual_seed(4)
         model = HADANet().train()
-        source = torch.randn(4, 64, 5, 4)
-        target = torch.randn(4, 64, 5, 4) + 2.0
+        source = torch.randn(4, 64, TRIAL_SAMPLES)
+        target = torch.randn(4, 64, TRIAL_SAMPLES) + 2.0
 
-        first_batch_norm = model.hierarchical_cnn.horizontal[1]
+        first_batch_norm = model.hierarchical_cnn.stem[1]
         self.assertEqual(first_batch_norm.num_batches_tracked.item(), 0)
         outputs = model.forward_domains(source, target, alpha=0.5)
 
@@ -61,15 +61,12 @@ class HADANetArchitectureTest(unittest.TestCase):
         expected = (gram - identity).square().sum() / weight.size(1) ** 2
         torch.testing.assert_close(model.orthogonal_loss(), expected)
 
-    def test_de_feature_shape(self):
-        rng = np.random.default_rng(2)
-        trials = rng.standard_normal((2, 64, 480)).astype(np.float32)
-        features = differential_entropy_features(trials)
-        self.assertEqual(features.shape, (2, 64, 5, 4))
-        self.assertTrue(np.isfinite(features).all())
-
+    def test_raw_front_end_requires_three_second_trials(self):
+        model = HADANet()
+        trials = torch.randn(2, 64, TRIAL_SAMPLES)
+        self.assertEqual(model(trials).shape, (2, 4))
         with self.assertRaises(ValueError):
-            differential_entropy_features(trials[..., :-1])
+            model(trials[..., :-1])
 
 
 class LOSOSplitTest(unittest.TestCase):
@@ -78,7 +75,9 @@ class LOSOSplitTest(unittest.TestCase):
         pool = {}
         for subject in (1, 2, 3):
             labels = np.tile(np.arange(4), 8)
-            features = rng.standard_normal((len(labels), 64, 5, 4)).astype(np.float32)
+            features = rng.standard_normal(
+                (len(labels), 64, TRIAL_SAMPLES)
+            ).astype(np.float32)
             pool[subject] = (features, labels)
 
         fold = build_loso_fold(pool, target_subject=2, seed=7)

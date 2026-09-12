@@ -1,18 +1,17 @@
-# HADANet: reproducible PhysioNet LOSO runner
+# HADANet-Raw: PhysioNet LOSO runner
 
-This branch adds a clean implementation of the architecture and evaluation
-protocol described in *HADANet: hybrid attentive domain adaptation for
-cross-subject motor imagery EEG decoding*.  The original research scripts are
-kept unchanged for traceability.
+This branch evaluates a raw-EEG variant of HADANet. It keeps the strict
+unlabeled-target LOSO protocol and HADANet domain-adaptation objectives, but
+replaces the paper's hand-crafted DE input with three-second EEG trials.
 
 ## What is implemented
 
-The model in `hadanet/model.py` follows the published order:
+The active model in `hadanet/model_raw.py` uses:
 
-1. five-band differential entropy (DE), shaped `[B, 64, 5, 4]`;
-2. horizontal `(5, 1)` and vertical `(1, 4)` hierarchical convolutions;
-3. element-wise time-frequency fusion;
-4. channel and depthwise-separable spatial attention;
+1. raw three-second EEG, shaped `[B, 64, 480]`;
+2. short- and long-range learned temporal convolutions;
+3. element-wise temporal fusion;
+4. channel and local/dilated temporal attention;
 5. residual feature alignment `Z = F_A + Delta F`;
 6. a gradient-reversal domain discriminator;
 7. five-kernel MK-MMD alignment;
@@ -40,13 +39,10 @@ without labels during training, so this is transductive UDA rather than pure
 domain generalization.
 
 The PhysioNet loader uses imagery runs 4, 6, 8, 10, 12, and 14. It excludes
-rest and executed-movement runs. The canonical three-second interval from cue
-onset is divided into four equal 0.75-second segments, and DE is computed for
-delta, theta, alpha, beta, and gamma bands. This preserves the `[64, 5, 4]`
-tensor required by HADANet while using the same `[0, 3)` task interval as the
-MOABB PhysioNet benchmark. The paper does not publish its feature-generation
-code, so this documented preprocessing is a reproducible reconstruction, not a
-claim of bit-identical preprocessing.
+rest and executed-movement runs and crops the canonical `[0, 3)` interval from
+cue onset. No notch filter, frequency-band filter bank, temporal segmentation,
+or differential entropy is applied. The cached input is raw EEG with shape
+`[trial, 64, 480]`.
 
 ## Installation and training
 
@@ -67,7 +63,7 @@ For a quick end-to-end check, run one target fold:
 python train_physionet_loso.py --subjects 1-20 --targets 1 --epochs 2
 ```
 
-Raw EDF files and versioned DE features are cached under `data/`. Results are
+Raw EDF files and versioned three-second trials are cached under `data/`. Results are
 written to `results/physionet_loso/seed_42/`, including:
 
 - one source-validation-selected checkpoint per target;

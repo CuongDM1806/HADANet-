@@ -1,4 +1,4 @@
-"""Train the published HADANet design with strict PhysioNet LOSO UDA.
+"""Train raw-EEG HADANet with strict PhysioNet LOSO UDA.
 
 Target EEG is available without labels during optimization.  Target labels are
 held out until the single final evaluation of each fold.  Model selection uses
@@ -42,7 +42,7 @@ def parse_subjects(value: str) -> list[int]:
 
 def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="HADANet PhysioNet strict LOSO (unlabeled-target UDA)."
+        description="HADANet-Raw PhysioNet strict LOSO (unlabeled-target UDA)."
     )
     parser.add_argument("--subjects", type=parse_subjects, default=parse_subjects("1-20"))
     parser.add_argument(
@@ -52,8 +52,12 @@ def arguments() -> argparse.Namespace:
         help="Target folds to run; default is every subject in --subjects.",
     )
     parser.add_argument("--data-dir", type=Path, default=Path("data/physionet_raw"))
-    parser.add_argument("--cache-dir", type=Path, default=Path("data/physionet_de"))
-    parser.add_argument("--results-dir", type=Path, default=Path("results/physionet_loso"))
+    parser.add_argument(
+        "--cache-dir", type=Path, default=Path("data/physionet_raw_trials")
+    )
+    parser.add_argument(
+        "--results-dir", type=Path, default=Path("results/physionet_raw_loso")
+    )
     parser.add_argument("--epochs", type=int, default=150)
     parser.add_argument("--batch-size", type=int, default=40)
     parser.add_argument("--learning-rate", type=float, default=5e-4)
@@ -294,7 +298,7 @@ def main() -> None:
     set_seed(args.seed)
     device = choose_device(args.device)
     print(
-        f"HADANet strict LOSO | subjects={args.subjects} | targets={targets} "
+        f"HADANet-Raw strict LOSO | subjects={args.subjects} | targets={targets} "
         f"| device={device} | seed={args.seed}",
         flush=True,
     )
@@ -302,7 +306,7 @@ def main() -> None:
         args.subjects, args.data_dir, args.cache_dir, verbose=args.verbose
     )
     if args.download_only:
-        print("Download and DE cache creation completed.", flush=True)
+        print("Download and raw-trial cache creation completed.", flush=True)
         return
 
     run_dir = args.results_dir / f"seed_{args.seed}"
