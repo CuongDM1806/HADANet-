@@ -19,7 +19,7 @@ import torch
 from sklearn.metrics import accuracy_score, cohen_kappa_score, f1_score, recall_score
 from torch.utils.data import DataLoader, TensorDataset
 
-from hadanet.model import HADANet, HADANetLoss
+from hadanet import HADANet, HADANetLoss
 from hadanet.physionet import build_loso_fold, load_subject_pool
 
 
@@ -166,7 +166,9 @@ def train_fold(args, fold, device: torch.device, fold_dir: Path) -> dict:
     print(
         f"[fold S{fold.target_subject:03d}] source_subjects={len(fold.source_subjects)} "
         f"| source_train={len(fold.source_train_y)} | source_val={len(fold.source_val_y)} "
-        f"| target_unlabeled={len(fold.target_train_x)} | batch={args.batch_size}",
+        f"| target_unlabeled={len(fold.target_train_x)} | batch={args.batch_size} "
+        f"| model={type(model).__name__} "
+        f"| params={sum(parameter.numel() for parameter in model.parameters()):,}",
         flush=True,
     )
     for epoch in range(args.epochs):

@@ -3,12 +3,28 @@ import unittest
 import numpy as np
 import torch
 
-from hadanet.model import HADANet, HADANetLoss
+from hadanet import HADANet, HADANetLoss, HADANetV1, HADANetV2
 from hadanet.physionet import build_loso_fold, differential_entropy_features
 from train_physionet_loso import make_loaders
 
 
 class HADANetArchitectureTest(unittest.TestCase):
+    def test_v2_is_the_active_architecture(self):
+        self.assertIs(HADANet, HADANetV2)
+        self.assertGreater(
+            sum(parameter.numel() for parameter in HADANetV2().parameters()),
+            sum(parameter.numel() for parameter in HADANetV1().parameters()),
+        )
+
+    def test_v2_front_end_preserves_expected_shapes(self):
+        model = HADANetV2().eval()
+        inputs = torch.randn(2, 64, 5, 4)
+        with torch.no_grad():
+            hcnn_features = model.hierarchical_cnn(inputs)
+            attended_features = model.attention(hcnn_features)
+        self.assertEqual(hcnn_features.shape, inputs.shape)
+        self.assertEqual(attended_features.shape, inputs.shape)
+
     def test_complete_loss_is_finite_and_backpropagates(self):
         torch.manual_seed(1)
         model = HADANet()
