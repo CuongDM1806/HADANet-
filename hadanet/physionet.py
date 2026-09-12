@@ -18,29 +18,34 @@ BANDS = (
     ("gamma", 30.0, 50.0),
 )
 CLASS_NAMES = ("left_hand", "right_hand", "both_hands", "both_feet")
-CACHE_VERSION = 1
+TRIAL_SECONDS = 3.0
+TEMPORAL_SEGMENTS = 4
+CACHE_VERSION = 2
 
 
 def differential_entropy_features(
     trials: np.ndarray,
     sfreq: float = 160.0,
-    segment_seconds: float = 1.0,
 ) -> np.ndarray:
-    """Convert four-second trials to [trial, channel, 5 bands, 4 segments]."""
+    """Convert three-second trials to [trial, channel, 5 bands, 4 segments]."""
     from scipy.signal import butter, sosfiltfilt
 
     if trials.ndim != 3:
         raise ValueError(f"Expected [trials, channels, samples], got {trials.shape}.")
-    segment_samples = int(round(segment_seconds * sfreq))
-    temporal_segments = 4
-    required_samples = segment_samples * temporal_segments
+    required_samples = int(round(TRIAL_SECONDS * sfreq))
+    if required_samples % TEMPORAL_SEGMENTS:
+        raise ValueError(
+            f"{required_samples} samples cannot be split into "
+            f"{TEMPORAL_SEGMENTS} equal temporal segments."
+        )
+    segment_samples = required_samples // TEMPORAL_SEGMENTS
     if trials.shape[-1] < required_samples:
         raise ValueError(
             f"Each trial needs {required_samples} samples, got {trials.shape[-1]}."
         )
     trials = trials[..., :required_samples].astype(np.float64, copy=False)
     features = np.empty(
-        (trials.shape[0], trials.shape[1], len(BANDS), temporal_segments),
+        (trials.shape[0], trials.shape[1], len(BANDS), TEMPORAL_SEGMENTS),
         dtype=np.float32,
     )
     nyquist = sfreq / 2.0
@@ -49,7 +54,7 @@ def differential_entropy_features(
         sos = butter(4, (low, high), btype="bandpass", fs=sfreq, output="sos")
         filtered = sosfiltfilt(sos, trials, axis=-1)
         segments = filtered.reshape(
-            trials.shape[0], trials.shape[1], temporal_segments, segment_samples
+            trials.shape[0], trials.shape[1], TEMPORAL_SEGMENTS, segment_samples
         )
         variance = segments.var(axis=-1, ddof=1)
         features[:, :, band_index, :] = (
@@ -96,7 +101,7 @@ def _load_imagery_trials(
             events,
             event_id={"T1": 1, "T2": 2},
             tmin=0.0,
-            tmax=4.0 - 1.0 / raw.info["sfreq"],
+            tmax=TRIAL_SECONDS - 1.0 / raw.info["sfreq"],
             baseline=None,
             preload=True,
             reject_by_annotation=True,

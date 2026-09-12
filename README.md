@@ -40,12 +40,13 @@ without labels during training, so this is transductive UDA rather than pure
 domain generalization.
 
 The PhysioNet loader uses imagery runs 4, 6, 8, 10, 12, and 14. It excludes
-rest and executed-movement runs. A four-second task interval is split into four
-one-second segments, and DE is computed for delta, theta, alpha, beta, and
-gamma bands. This reconstructs the `[64, 5, 4]` tensor expected by the public
-HADANet scripts. The paper does not publish its feature-generation code, so
-this documented preprocessing is a reproducible reconstruction, not a claim of
-bit-identical preprocessing.
+rest and executed-movement runs. The canonical three-second interval from cue
+onset is divided into four equal 0.75-second segments, and DE is computed for
+delta, theta, alpha, beta, and gamma bands. This preserves the `[64, 5, 4]`
+tensor required by HADANet while using the same `[0, 3)` task interval as the
+MOABB PhysioNet benchmark. The paper does not publish its feature-generation
+code, so this documented preprocessing is a reproducible reconstruction, not a
+claim of bit-identical preprocessing.
 
 ## Installation and training
 

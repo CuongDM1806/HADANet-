@@ -25,10 +25,13 @@ class HADANetArchitectureTest(unittest.TestCase):
 
     def test_de_feature_shape(self):
         rng = np.random.default_rng(2)
-        trials = rng.standard_normal((2, 64, 640)).astype(np.float32)
+        trials = rng.standard_normal((2, 64, 480)).astype(np.float32)
         features = differential_entropy_features(trials)
         self.assertEqual(features.shape, (2, 64, 5, 4))
         self.assertTrue(np.isfinite(features).all())
+
+        with self.assertRaises(ValueError):
+            differential_entropy_features(trials[..., :-1])
 
 
 class LOSOSplitTest(unittest.TestCase):
@@ -43,6 +46,10 @@ class LOSOSplitTest(unittest.TestCase):
         fold = build_loso_fold(pool, target_subject=2, seed=7)
         self.assertEqual(fold.source_subjects, (1, 3))
         self.assertNotIn(2, fold.source_subjects)
+        self.assertEqual(len(fold.source_train_y), 56)
+        self.assertEqual(len(fold.source_val_y), 8)
+        self.assertEqual(len(fold.target_train_x), 32)
+        self.assertEqual(len(fold.target_test_y), 32)
         source_loader, val_loader, target_loader, test_loader = make_loaders(
             fold, batch_size=4, num_workers=0
         )
