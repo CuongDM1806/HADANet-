@@ -57,7 +57,12 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=150)
     parser.add_argument("--batch-size", type=int, default=15)
     parser.add_argument("--learning-rate", type=float, default=5e-4)
-    parser.add_argument("--validation-fraction", type=float, default=0.2)
+    parser.add_argument(
+        "--validation-fraction",
+        type=float,
+        default=0.05,
+        help="Per-source validation fraction (default: 0.05, i.e. 95/5).",
+    )
     parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num-workers", type=int, default=2)

@@ -187,7 +187,7 @@ class LOSOFold:
 def build_loso_fold(
     subject_pool: dict[int, tuple[np.ndarray, np.ndarray]],
     target_subject: int,
-    validation_fraction: float = 0.2,
+    validation_fraction: float = 0.05,
     seed: int = 42,
 ) -> LOSOFold:
     """Create one fold without exposing target labels to the training datasets."""
@@ -208,9 +208,18 @@ def build_loso_fold(
     for subject in source_subjects:
         features, labels = subject_pool[subject]
         indices = np.arange(len(labels))
+        class_count = np.unique(labels).size
+        validation_size = max(
+            int(np.ceil(len(labels) * validation_fraction)), class_count
+        )
+        if len(labels) - validation_size < class_count:
+            raise ValueError(
+                f"S{subject:03d} has too few trials for a stratified "
+                f"{validation_fraction:.1%} validation split."
+            )
         train_indices, val_indices = train_test_split(
             indices,
-            test_size=validation_fraction,
+            test_size=validation_size,
             random_state=seed + subject,
             stratify=labels,
         )

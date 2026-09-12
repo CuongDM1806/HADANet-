@@ -33,7 +33,7 @@ The default benchmark uses PhysioNet subjects S001-S020. For target S001,
 S002-S020 are labeled sources; the complete EEG set of S001 is the unlabeled
 target domain. This is repeated for all 20 target subjects.
 
-Each source subject contributes a stratified 80/20 train/validation split. The
+Each source subject contributes a stratified 95/5 train/validation split. The
 source validation accuracy selects the checkpoint. The held-out target labels
 are read once, after training, for the final fold score. Target EEG is used
 without labels during training, so this is transductive UDA rather than pure
@@ -56,6 +56,7 @@ python train_physionet_loso.py \
   --targets 1-20 \
   --epochs 150 \
   --batch-size 15 \
+  --validation-fraction 0.05 \
   --device cuda
 ```
 
